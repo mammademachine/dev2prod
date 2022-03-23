@@ -1,0 +1,48 @@
+version: "3.8"
+
+
+services:
+  
+  
+  project_db_server:
+    image: postgres
+    restart: always
+    secrets:
+      - project_db_server_pass
+    volumes:
+      - project_db_server:/var/lib/postgres/data
+      - ./project_db_server/init.sql:/docker-entrypoint-initdb.d/init.sql
+    environment:
+      - POSTGRES_PASSWORD_FILE=/run/secrets/project_db_server_pass
+    ports:
+      - "5432:5432"
+    networks: 
+      - postgres-network
+
+  busybox:
+    build: busybox
+    secrets:
+      - busybox_pass
+    volumes:
+      - ./project_db_server/init.sql:/docker-entrypoint-initdb.d/initbb.sql
+    environment:
+      - PGPASSWORD=/run/secrets/busybox_pass
+      - POSTGRES_USER=project_user
+      - POSTGRES_DB=project_db
+    ports:
+     - "5431:5431"
+    depends_on: 
+      - project_db_server
+    networks: 
+      - postgres-network
+
+volumes:
+  project_db_server:
+secrets:
+  project_db_server_pass:
+    file: secrets/project_pwd
+  busybox_pass:
+    file: secrets/project_pass
+networks:
+  postgres-network:
+
